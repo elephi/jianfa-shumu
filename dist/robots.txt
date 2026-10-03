@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://nut.fushengji.top/sitemap.xml
