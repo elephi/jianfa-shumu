@@ -56,6 +56,10 @@ kbd { border: 1px solid var(--line); border-radius: 6px; padding: 3px 7px; color
 .tag-filter:hover, .tag-filter[aria-pressed="true"] { background: var(--deep); color: var(--paper); border-color: var(--deep); }
 .tag-select { flex: none; max-width: 160px; border: 1px solid var(--line); border-radius: 999px; padding: 8px 32px 8px 13px; color: var(--ink); background: var(--card); cursor: pointer; font-size: .86rem; }
 .book-grid { display: grid; grid-template-columns: repeat(5, minmax(0,1fr)); gap: 42px 24px; }
+.load-sentinel { min-height: 96px; display: grid; place-items: center; color: var(--muted); font-size: .82rem; }
+.load-sentinel[hidden] { display: none; }
+.load-sentinel span::after { content: ""; display: inline-block; width: 5px; height: 5px; margin-left: 8px; border-radius: 50%; background: var(--accent); box-shadow: 10px 0 var(--accent), 20px 0 var(--accent); animation: pulse 1.2s ease-in-out infinite; }
+@keyframes pulse { 0%, 100% { opacity: .35; } 50% { opacity: 1; } }
 .book-card { min-width: 0; }
 .book-open { width: 100%; padding: 0; border: 0; background: transparent; text-align: left; cursor: pointer; }
 .cover-wrap { position: relative; aspect-ratio: 2 / 3; overflow: hidden; border-radius: 4px 12px 12px 4px; background: #d9d5c8; box-shadow: -5px 9px 19px rgba(16,32,26,.16), inset 3px 0 rgba(255,255,255,.35); transition: transform .24s ease, box-shadow .24s ease; }
@@ -106,4 +110,4 @@ dialog::backdrop { background: rgba(7,17,13,.62); backdrop-filter: blur(5px); }
   .dialog-book { grid-template-columns: 1fr; }
   .dialog-book img { width: 130px; }
 }
-@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; transition: none !important; } }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; transition: none !important; animation: none !important; } }

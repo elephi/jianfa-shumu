@@ -1,4 +1,5 @@
-const state = { books: [], query: "", tag: "全部", meta: {} };
+const PAGE_SIZE = 30;
+const state = { books: [], filteredBooks: [], rendered: 0, query: "", tag: "全部", meta: {} };
 const grid = document.querySelector("#book-grid");
 const search = document.querySelector("#search");
 const count = document.querySelector("#book-count");
@@ -6,6 +7,7 @@ const filters = document.querySelector("#tag-filters");
 const empty = document.querySelector("#empty-state");
 const dialog = document.querySelector("#book-dialog");
 const template = document.querySelector("#book-template");
+const sentinel = document.querySelector("#load-sentinel");
 const palette = ["#16372b", "#8b3d2f", "#243a5a", "#66552b", "#4a315b", "#17656a"];
 
 const normalize = value => String(value || "").normalize("NFKC").toLocaleLowerCase();
@@ -68,13 +70,28 @@ function visibleBooks() {
 }
 
 function render() {
-  const books = visibleBooks();
+  state.filteredBooks = visibleBooks();
+  state.rendered = 0;
   grid.replaceChildren();
-  count.textContent = books.length;
-  empty.hidden = books.length > 0;
-  grid.hidden = books.length === 0;
-  books.forEach((book, index) => grid.append(bookCard(book, index)));
+  count.textContent = state.filteredBooks.length;
+  empty.hidden = state.filteredBooks.length > 0;
+  grid.hidden = state.filteredBooks.length === 0;
+  sentinel.hidden = true;
+  renderNextPage();
   grid.setAttribute("aria-busy", "false");
+}
+
+function renderNextPage() {
+  if (state.rendered >= state.filteredBooks.length) {
+    sentinel.hidden = true;
+    return;
+  }
+  const fragment = document.createDocumentFragment();
+  const nextBooks = state.filteredBooks.slice(state.rendered, state.rendered + PAGE_SIZE);
+  nextBooks.forEach((book, index) => fragment.append(bookCard(book, state.rendered + index)));
+  grid.append(fragment);
+  state.rendered += nextBooks.length;
+  sentinel.hidden = state.rendered >= state.filteredBooks.length;
 }
 
 function bookCard(book, index) {
@@ -108,4 +125,7 @@ document.querySelector("#clear-search").addEventListener("click", () => { search
 document.querySelector(".dialog-close").addEventListener("click", () => dialog.close());
 dialog.addEventListener("click", event => { if (event.target === dialog) dialog.close(); });
 document.addEventListener("keydown", event => { if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") { event.preventDefault(); search.focus(); } });
+new IntersectionObserver(entries => {
+  if (entries.some(entry => entry.isIntersecting)) renderNextPage();
+}, { rootMargin: "800px 0px" }).observe(sentinel);
 loadBooks();
