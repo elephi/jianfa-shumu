@@ -1,5 +1,7 @@
 const PAGE_SIZE = 30;
-const state = { books: [], filteredBooks: [], rendered: 0, query: "", tag: "全部", meta: {} };
+const HOME_LIMIT = 100;
+const HOME_SAMPLE_KEY = "jianfa-home-sample";
+const state = { books: [], homeBooks: [], filteredBooks: [], rendered: 0, page: 1, query: "", tag: "全部", meta: {} };
 const grid = document.querySelector("#book-grid");
 const search = document.querySelector("#search");
 const count = document.querySelector("#book-count");
@@ -8,6 +10,7 @@ const empty = document.querySelector("#empty-state");
 const dialog = document.querySelector("#book-dialog");
 const template = document.querySelector("#book-template");
 const sentinel = document.querySelector("#load-sentinel");
+const pagination = document.querySelector("#pagination");
 const palette = ["#16372b", "#8b3d2f", "#243a5a", "#66552b", "#4a315b", "#17656a"];
 
 const normalize = value => String(value || "").normalize("NFKC").toLocaleLowerCase();
@@ -19,6 +22,7 @@ async function loadBooks() {
     if (!response.ok) throw new Error("无法读取书籍数据");
     const payload = await response.json();
     state.books = payload.books || [];
+    state.homeBooks = createHomeSample();
     state.meta = payload.meta || {};
     document.querySelector("#updated-at").textContent = state.meta.updated_at || "未知";
     renderFilters();
@@ -45,7 +49,7 @@ function renderFilters() {
     button.className = "tag-filter";
     button.textContent = tag;
     button.setAttribute("aria-pressed", String(tag === state.tag));
-    button.addEventListener("click", () => { state.tag = tag; renderFilters(); render(); });
+    button.addEventListener("click", () => { state.tag = tag; state.page = 1; renderFilters(); render(); });
     filters.append(button);
   });
   if (tags.length > featured.length) {
@@ -54,19 +58,54 @@ function renderFilters() {
     select.setAttribute("aria-label", "选择更多标签");
     select.innerHTML = `<option value="">更多标签…</option>${tags.slice(featured.length).map(tag => `<option value="${escapeHtml(tag)}">${escapeHtml(tag)}</option>`).join("")}`;
     if (!featured.includes(state.tag) && state.tag !== "全部") select.value = state.tag;
-    select.addEventListener("change", () => { if (select.value) { state.tag = select.value; renderFilters(); render(); } });
+    select.addEventListener("change", () => { if (select.value) { state.tag = select.value; state.page = 1; renderFilters(); render(); } });
     filters.append(select);
   }
 }
 
 function visibleBooks() {
   const query = normalize(state.query).trim();
-  return state.books.filter(book => {
+  const source = isSearchMode() ? state.books : state.homeBooks;
+  return source.filter(book => {
     const haystack = normalize([book.title, ...(book.authors || []), ...(book.tags || [])].join(" "));
     const matchesQuery = !query || query.split(/\s+/).every(term => haystack.includes(term));
     const matchesTag = state.tag === "全部" || (book.tags || []).includes(state.tag);
     return matchesQuery && matchesTag;
   });
+}
+
+function isSearchMode() {
+  return normalize(state.query).trim() !== "" || state.tag !== "全部";
+}
+
+function shuffled(books) {
+  const result = [...books];
+  for (let index = result.length - 1; index > 0; index -= 1) {
+    const randomIndex = Math.floor(Math.random() * (index + 1));
+    [result[index], result[randomIndex]] = [result[randomIndex], result[index]];
+  }
+  return result;
+}
+
+function sampleSignature(books) {
+  return books.map(book => String(book.id ?? book.title)).sort().join(",");
+}
+
+function createHomeSample() {
+  const size = Math.min(HOME_LIMIT, state.books.length);
+  let sample = shuffled(state.books).slice(0, size);
+  let previous = "";
+  try { previous = localStorage.getItem(HOME_SAMPLE_KEY) || ""; } catch (_) { /* storage may be unavailable */ }
+  for (let attempt = 0; attempt < 5 && state.books.length > 1 && sampleSignature(sample) === previous; attempt += 1) {
+    sample = shuffled(state.books).slice(0, size);
+  }
+  if (sampleSignature(sample) === previous && state.books.length > size) {
+    const selected = new Set(sample.map(book => String(book.id ?? book.title)));
+    const replacement = state.books.find(book => !selected.has(String(book.id ?? book.title)));
+    if (replacement) sample[sample.length - 1] = replacement;
+  }
+  try { localStorage.setItem(HOME_SAMPLE_KEY, sampleSignature(sample)); } catch (_) { /* storage may be unavailable */ }
+  return sample;
 }
 
 function render() {
@@ -77,7 +116,9 @@ function render() {
   empty.hidden = state.filteredBooks.length > 0;
   grid.hidden = state.filteredBooks.length === 0;
   sentinel.hidden = true;
-  renderNextPage();
+  pagination.hidden = true;
+  if (isSearchMode()) renderSearchPage();
+  else renderNextPage();
   grid.setAttribute("aria-busy", "false");
 }
 
@@ -94,11 +135,71 @@ function renderNextPage() {
   sentinel.hidden = state.rendered >= state.filteredBooks.length;
 }
 
-function randomizeBooks() {
-  for (let index = state.books.length - 1; index > 0; index -= 1) {
-    const randomIndex = Math.floor(Math.random() * (index + 1));
-    [state.books[index], state.books[randomIndex]] = [state.books[randomIndex], state.books[index]];
+function renderSearchPage() {
+  const pageCount = Math.max(1, Math.ceil(state.filteredBooks.length / PAGE_SIZE));
+  state.page = Math.min(Math.max(1, state.page), pageCount);
+  const start = (state.page - 1) * PAGE_SIZE;
+  const fragment = document.createDocumentFragment();
+  state.filteredBooks.slice(start, start + PAGE_SIZE).forEach((book, index) => fragment.append(bookCard(book, start + index)));
+  grid.append(fragment);
+  renderPagination(pageCount);
+}
+
+function renderPagination(pageCount) {
+  pagination.replaceChildren();
+  if (state.filteredBooks.length <= PAGE_SIZE) {
+    pagination.hidden = true;
+    return;
   }
+  pagination.hidden = false;
+  pagination.append(pageButton("上一页", state.page - 1, state.page === 1, "previous"));
+
+  const pages = pageNumbers(state.page, pageCount);
+  pages.forEach((page, index) => {
+    if (index > 0 && page - pages[index - 1] > 1) {
+      const ellipsis = document.createElement("span");
+      ellipsis.className = "pagination-ellipsis";
+      ellipsis.textContent = "…";
+      pagination.append(ellipsis);
+    }
+    const button = pageButton(String(page), page, false);
+    if (page === state.page) {
+      button.classList.add("is-current");
+      button.setAttribute("aria-current", "page");
+    }
+    pagination.append(button);
+  });
+
+  pagination.append(pageButton("下一页", state.page + 1, state.page === pageCount, "next"));
+}
+
+function pageNumbers(current, total) {
+  return [...new Set([1, current - 1, current, current + 1, total])]
+    .filter(page => page >= 1 && page <= total)
+    .sort((a, b) => a - b);
+}
+
+function pageButton(label, page, disabled, rel) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.textContent = label;
+  button.disabled = disabled;
+  if (rel) button.setAttribute("aria-label", rel === "previous" ? "上一页" : "下一页");
+  button.addEventListener("click", () => {
+    state.page = page;
+    render();
+    document.querySelector(".library").scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+  return button;
+}
+
+function randomizeBooks() {
+  state.homeBooks = createHomeSample();
+  state.query = "";
+  state.tag = "全部";
+  state.page = 1;
+  search.value = "";
+  renderFilters();
   render();
   document.querySelector("#book-grid").scrollIntoView({ behavior: "smooth", block: "start" });
 }
@@ -129,13 +230,13 @@ function openBook(book) {
   dialog.showModal();
 }
 
-search.addEventListener("input", event => { state.query = event.target.value; render(); });
-document.querySelector("#clear-search").addEventListener("click", () => { search.value = ""; state.query = ""; state.tag = "全部"; renderFilters(); render(); search.focus(); });
+search.addEventListener("input", event => { state.query = event.target.value; state.page = 1; render(); });
+document.querySelector("#clear-search").addEventListener("click", () => { search.value = ""; state.query = ""; state.tag = "全部"; state.page = 1; renderFilters(); render(); search.focus(); });
 document.querySelector("#randomize").addEventListener("click", randomizeBooks);
 document.querySelector(".dialog-close").addEventListener("click", () => dialog.close());
 dialog.addEventListener("click", event => { if (event.target === dialog) dialog.close(); });
 document.addEventListener("keydown", event => { if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") { event.preventDefault(); search.focus(); } });
 new IntersectionObserver(entries => {
-  if (entries.some(entry => entry.isIntersecting)) renderNextPage();
+  if (!isSearchMode() && entries.some(entry => entry.isIntersecting)) renderNextPage();
 }, { rootMargin: "800px 0px" }).observe(sentinel);
 loadBooks();
