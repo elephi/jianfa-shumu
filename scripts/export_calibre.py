@@ -10,6 +10,7 @@ import json
 import re
 import shutil
 import sqlite3
+import subprocess
 import sys
 from pathlib import Path
 
@@ -64,6 +65,7 @@ def export(library: Path, output: Path, tag: str) -> int:
 
     books = []
     active_covers = set()
+    exported_cover_paths = []
     for row in rows:
         book_id = row["id"]
         authors = [item[0] for item in connection.execute(author_query, (book_id,))]
@@ -74,6 +76,7 @@ def export(library: Path, output: Path, tag: str) -> int:
             filename = f"{book_id}.jpg"
             shutil.copy2(source_cover, covers / filename)
             active_covers.add(filename)
+            exported_cover_paths.append(covers / filename)
             cover_url = f"covers/{filename}"
         books.append({
             "id": book_id,
@@ -88,6 +91,18 @@ def export(library: Path, output: Path, tag: str) -> int:
     for existing in covers.glob("*.jpg"):
         if existing.name not in active_covers:
             existing.unlink()
+
+    # Keep a large library lightweight on the web. macOS ships `sips`; on other
+    # systems the original cover is preserved unless the user adds an optimizer.
+    sips = shutil.which("sips")
+    if sips:
+        for start in range(0, len(exported_cover_paths), 100):
+            subprocess.run(
+                [sips, "-Z", "720", "--setProperty", "formatOptions", "60", *map(str, exported_cover_paths[start : start + 100])],
+                check=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
 
     payload = {
         "meta": {

@@ -35,7 +35,9 @@ function allTags() {
 
 function renderFilters() {
   filters.replaceChildren();
-  ["全部", ...allTags()].forEach(tag => {
+  const tags = allTags();
+  const featured = tags.slice(0, 18);
+  ["全部", ...featured].forEach(tag => {
     const button = document.createElement("button");
     button.type = "button";
     button.className = "tag-filter";
@@ -44,6 +46,15 @@ function renderFilters() {
     button.addEventListener("click", () => { state.tag = tag; renderFilters(); render(); });
     filters.append(button);
   });
+  if (tags.length > featured.length) {
+    const select = document.createElement("select");
+    select.className = "tag-select";
+    select.setAttribute("aria-label", "选择更多标签");
+    select.innerHTML = `<option value="">更多标签…</option>${tags.slice(featured.length).map(tag => `<option value="${escapeHtml(tag)}">${escapeHtml(tag)}</option>`).join("")}`;
+    if (!featured.includes(state.tag) && state.tag !== "全部") select.value = state.tag;
+    select.addEventListener("change", () => { if (select.value) { state.tag = select.value; renderFilters(); render(); } });
+    filters.append(select);
+  }
 }
 
 function visibleBooks() {

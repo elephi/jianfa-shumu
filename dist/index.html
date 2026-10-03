@@ -3,29 +3,29 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="一个来自 Calibre 的私人书单。">
+  <meta name="description" content="减法书目：经过主动筛选后留下的书。">
   <meta name="theme-color" content="#101b17">
-  <title>读过 · 我的书架</title>
+  <title>减法书目</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23101b17'/%3E%3Cpath d='M16 15h22c6 0 10 4 10 10v25H24c-5 0-8-3-8-8V15Z' fill='%23f2b84b'/%3E%3Cpath d='M24 15v35M31 25h10M31 32h10' stroke='%23101b17' stroke-width='4'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="styles.css">
-  <script src="app.js" defer></script>
+  <link rel="stylesheet" href="styles.css?v=2">
+  <script src="app.js?v=2" defer></script>
 </head>
 <body>
   <header class="site-header">
-    <a class="brand" href="#" aria-label="返回书架顶部">
-      <span class="brand-mark" aria-hidden="true">读</span>
-      <span>读过</span>
+    <a class="brand" href="#" aria-label="返回减法书目顶部">
+      <span class="brand-mark" aria-hidden="true">减</span>
+      <span>减法书目</span>
     </a>
-    <p class="header-note">我的 Calibre 精选书架</p>
+    <p class="header-note">做过减法之后，留下值得重读的书</p>
   </header>
 
   <main>
     <section class="intro" aria-labelledby="page-title">
       <div>
-        <p class="eyebrow">END COLLECTION</p>
-        <h1 id="page-title">把读完的书，<br><em>留在这里。</em></h1>
+        <p class="eyebrow">THE SHORTLIST</p>
+        <h1 id="page-title">书很多，<br><em>留下少数。</em></h1>
       </div>
-      <p class="intro-copy">这是我的已读书单。你可以按书名、作者或标签，找到感兴趣的下一本。</p>
+      <p class="intro-copy">这不是完整藏书，而是经过取舍之后留下的书。按书名、作者或标签，看看哪些作品通过了我的减法筛选。</p>
     </section>
 
     <section class="library" aria-label="书籍列表">
@@ -52,7 +52,7 @@
   </main>
 
   <footer>
-    <p>从 Calibre 更新 · <time id="updated-at">—</time></p>
+    <p>减法书目 · 从 Calibre 更新于 <time id="updated-at">—</time></p>
   </footer>
 
   <dialog id="book-dialog">
