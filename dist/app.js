@@ -94,6 +94,15 @@ function renderNextPage() {
   sentinel.hidden = state.rendered >= state.filteredBooks.length;
 }
 
+function randomizeBooks() {
+  for (let index = state.books.length - 1; index > 0; index -= 1) {
+    const randomIndex = Math.floor(Math.random() * (index + 1));
+    [state.books[index], state.books[randomIndex]] = [state.books[randomIndex], state.books[index]];
+  }
+  render();
+  document.querySelector("#book-grid").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
 function bookCard(book, index) {
   const card = template.content.firstElementChild.cloneNode(true);
   const cover = card.querySelector(".cover");
@@ -122,6 +131,7 @@ function openBook(book) {
 
 search.addEventListener("input", event => { state.query = event.target.value; render(); });
 document.querySelector("#clear-search").addEventListener("click", () => { search.value = ""; state.query = ""; state.tag = "全部"; renderFilters(); render(); search.focus(); });
+document.querySelector("#randomize").addEventListener("click", randomizeBooks);
 document.querySelector(".dialog-close").addEventListener("click", () => dialog.close());
 dialog.addEventListener("click", event => { if (event.target === dialog) dialog.close(); });
 document.addEventListener("keydown", event => { if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") { event.preventDefault(); search.focus(); } });
