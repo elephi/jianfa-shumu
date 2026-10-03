@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 64" role="img" aria-labelledby="title desc">
+  <title id="title">减法书目</title>
+  <desc id="desc">一本展开的书，中间以减号表示筛选与取舍</desc>
+  <rect x="2" y="4" width="56" height="56" rx="15" fill="#11251d"/>
+  <path d="M11 18.5c7.8-2.2 13.7-.8 18 4.1v25.1c-4.4-4-10.4-5.1-18-3.1V18.5Z" fill="#fffdf7"/>
+  <path d="M49 18.5c-7.8-2.2-13.7-.8-18 4.1v25.1c4.4-4 10.4-5.1 18-3.1V18.5Z" fill="#fffdf7"/>
+  <rect x="19" y="29.5" width="22" height="5" rx="2.5" fill="#e9aa2f"/>
+  <text x="74" y="42" fill="#10201a" font-family="ui-serif, Georgia, 'Songti SC', 'Noto Serif CJK SC', serif" font-size="29" font-weight="650" letter-spacing="1.5">减法书目</text>
+</svg>
