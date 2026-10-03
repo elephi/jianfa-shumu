@@ -4,6 +4,62 @@ set -eu
 SITE_DIR="/Users/lingyundong/Develop/favbooks/site"
 SCRIPT_DIR="$SITE_DIR/scripts"
 CALIBRE_LIBRARY="/Users/lingyundong/Calibre@M1/calibre@m1"
+DEFAULT_PROXY="127.0.0.1:7897"
+PROXY="$DEFAULT_PROXY"
+
+usage() {
+  echo "用法：nut-update [--proxy:主机:端口]"
+  echo "      nut-update [--proxy 主机:端口]"
+  echo "默认代理：$DEFAULT_PROXY"
+}
+
+case "${1:-}" in
+  --proxy:*)
+    PROXY=${1#--proxy:}
+    shift
+    ;;
+  --proxy)
+    if [ "$#" -lt 2 ]; then
+      echo "错误：--proxy 后面需要提供代理地址。" >&2
+      usage >&2
+      exit 2
+    fi
+    PROXY=$2
+    shift 2
+    ;;
+  -h|--help)
+    usage
+    exit 0
+    ;;
+  "")
+    ;;
+  *)
+    echo "错误：无法识别的参数：$1" >&2
+    usage >&2
+    exit 2
+    ;;
+esac
+
+if [ "$#" -ne 0 ] || [ -z "$PROXY" ]; then
+  echo "错误：代理参数格式不正确。" >&2
+  usage >&2
+  exit 2
+fi
+
+case "$PROXY" in
+  *://*) PROXY_URL=$PROXY ;;
+  *) PROXY_URL="http://$PROXY" ;;
+esac
+
+echo "正在检查代理：$PROXY_URL"
+if ! PROXY_ERROR=$(curl --silent --show-error --output /dev/null --head \
+  --proxy "$PROXY_URL" --connect-timeout 5 --max-time 15 \
+  https://github.com/ 2>&1); then
+  echo "错误：无法通过代理 $PROXY_URL 连接 GitHub。" >&2
+  echo "$PROXY_ERROR" >&2
+  echo "请确认代理程序已启动、地址和端口正确，然后重试。" >&2
+  exit 1
+fi
 
 python3 "$SCRIPT_DIR/export_calibre.py" \
   --library "$CALIBRE_LIBRARY" \
@@ -13,12 +69,15 @@ python3 "$SCRIPT_DIR/export_calibre.py" \
 git -C "$SITE_DIR" add dist/books.json dist/covers
 
 if git -C "$SITE_DIR" diff --cached --quiet; then
-  echo "书目没有变化，无需发布。"
-  exit 0
+  echo "书目没有变化；继续检查是否有尚未推送的本地提交。"
+else
+  git -C "$SITE_DIR" commit -m "Update Calibre library"
 fi
 
-git -C "$SITE_DIR" commit -m "Update Calibre library"
-git -C "$SITE_DIR" push origin main
+git -C "$SITE_DIR" \
+  -c http.proxy="$PROXY_URL" \
+  -c https.proxy="$PROXY_URL" \
+  push origin main
 
 echo "‘减法书目’数据已推送；GitHub Pages 正在自动发布。"
 echo "线上地址：https://nut.fushengji.top"
