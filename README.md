@@ -28,7 +28,7 @@ python3 scripts/export_calibre.py --library "/你的/Calibre Library"
 nut-update
 ```
 
-它使用固定书库 `/Users/lingyundong/Calibre@M1/calibre@m1`，只更新本地网站数据，不会自动发布到互联网。
+它使用固定书库 `/Users/lingyundong/Calibre@M1/calibre@m1`，更新本地数据后会自动提交并推送到 GitHub，随后由 GitHub Pages 发布到 `https://nut.fushengji.top`。
 
 ## 免费公开部署：GitHub Pages
 

@@ -10,5 +10,15 @@ python3 "$SCRIPT_DIR/export_calibre.py" \
   --output "$SITE_DIR/dist" \
   --tag END
 
-echo "本地‘减法书目’数据已更新：$SITE_DIR/dist"
-echo "在线网站尚未发布；需要上线时，请在 Codex 中说‘发布减法书目更新’。"
+git -C "$SITE_DIR" add dist/books.json dist/covers
+
+if git -C "$SITE_DIR" diff --cached --quiet; then
+  echo "书目没有变化，无需发布。"
+  exit 0
+fi
+
+git -C "$SITE_DIR" commit -m "Update Calibre library"
+git -C "$SITE_DIR" push origin main
+
+echo "‘减法书目’数据已推送；GitHub Pages 正在自动发布。"
+echo "线上地址：https://nut.fushengji.top"
