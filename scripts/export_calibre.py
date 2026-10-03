@@ -1,0 +1,120 @@
+#!/usr/bin/env python3
+"""Export books carrying a Calibre tag into a static website data set."""
+
+from __future__ import annotations
+
+import argparse
+import datetime as dt
+import html
+import json
+import re
+import shutil
+import sqlite3
+import sys
+from pathlib import Path
+
+
+def plain_description(value: str | None) -> str:
+    if not value:
+        return ""
+    value = re.sub(r"<\s*br\s*/?>", "\n", value, flags=re.I)
+    value = re.sub(r"</\s*p\s*>", "\n\n", value, flags=re.I)
+    value = re.sub(r"<[^>]+>", "", value)
+    value = html.unescape(value)
+    value = re.sub(r"[ \t]+", " ", value)
+    value = re.sub(r"\n{3,}", "\n\n", value)
+    return value.strip()
+
+
+def export(library: Path, output: Path, tag: str) -> int:
+    database = library / "metadata.db"
+    if not database.is_file():
+        raise FileNotFoundError(f"找不到 Calibre 数据库：{database}")
+
+    output.mkdir(parents=True, exist_ok=True)
+    covers = output / "covers"
+    covers.mkdir(exist_ok=True)
+
+    uri = f"file:{database.resolve()}?mode=ro"
+    connection = sqlite3.connect(uri, uri=True)
+    connection.row_factory = sqlite3.Row
+    rows = connection.execute(
+        """
+        SELECT b.id, b.title, b.path, c.text AS description
+        FROM books b
+        JOIN books_tags_link btl ON btl.book = b.id
+        JOIN tags selected_tag ON selected_tag.id = btl.tag
+        LEFT JOIN comments c ON c.book = b.id
+        WHERE lower(selected_tag.name) = lower(?)
+        ORDER BY b.sort COLLATE NOCASE
+        """,
+        (tag,),
+    ).fetchall()
+
+    author_query = """
+        SELECT a.name FROM authors a
+        JOIN books_authors_link bal ON bal.author = a.id
+        WHERE bal.book = ? ORDER BY bal.id
+    """
+    tag_query = """
+        SELECT t.name FROM tags t
+        JOIN books_tags_link btl ON btl.tag = t.id
+        WHERE btl.book = ? ORDER BY t.name COLLATE NOCASE
+    """
+
+    books = []
+    active_covers = set()
+    for row in rows:
+        book_id = row["id"]
+        authors = [item[0] for item in connection.execute(author_query, (book_id,))]
+        tags = [item[0] for item in connection.execute(tag_query, (book_id,))]
+        source_cover = library / row["path"] / "cover.jpg"
+        cover_url = None
+        if source_cover.is_file():
+            filename = f"{book_id}.jpg"
+            shutil.copy2(source_cover, covers / filename)
+            active_covers.add(filename)
+            cover_url = f"covers/{filename}"
+        books.append({
+            "id": book_id,
+            "title": row["title"],
+            "authors": authors,
+            "tags": tags,
+            "cover": cover_url,
+            "description": plain_description(row["description"]),
+        })
+
+    connection.close()
+    for existing in covers.glob("*.jpg"):
+        if existing.name not in active_covers:
+            existing.unlink()
+
+    payload = {
+        "meta": {
+            "tag": tag,
+            "updated_at": dt.datetime.now().astimezone().strftime("%Y-%m-%d %H:%M"),
+            "count": len(books),
+        },
+        "books": books,
+    }
+    (output / "books.json").write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    return len(books)
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="把带指定标签的 Calibre 书籍导出为静态网站数据")
+    parser.add_argument("--library", type=Path, required=True, help="Calibre 书库目录（包含 metadata.db）")
+    parser.add_argument("--tag", default="END", help="需要导出的标签，默认 END")
+    parser.add_argument("--output", type=Path, default=Path(__file__).resolve().parents[1] / "dist", help="网站输出目录")
+    args = parser.parse_args()
+    try:
+        count = export(args.library.expanduser().resolve(), args.output.resolve(), args.tag)
+    except (OSError, sqlite3.Error) as error:
+        print(f"导出失败：{error}", file=sys.stderr)
+        return 1
+    print(f"已导出 {count} 本带有 {args.tag!r} 标签的书。")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -1,0 +1,11 @@
+{
+  "meta": {
+    "tag": "END",
+    "updated_at": "演示数据"
+  },
+  "books": [
+    {"id": 1, "title": "你的书籍会出现在这里", "authors": ["来自 Calibre"], "tags": ["END", "演示"], "cover": null, "description": "运行同步命令后，这些演示内容会被你的真实书籍替换。"},
+    {"id": 2, "title": "支持书名、作者和标签搜索", "authors": ["快速查找"], "tags": ["END", "搜索"], "cover": null, "description": "搜索完全在浏览器中完成，不需要额外的在线数据库。"},
+    {"id": 3, "title": "封面与简介也会一起导出", "authors": ["保持简洁"], "tags": ["END", "书架"], "cover": null, "description": "点击任意书籍，可以查看完整简介和标签。"}
+  ]
+}
