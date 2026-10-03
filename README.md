@@ -1,4 +1,4 @@
-# 减法书目 — Calibre END 精选书单
+# 减法书目 — Calibre 精选书单
 
 一个零后端、可免费托管的 Calibre 精选书单网站。“减法书目”只公开经过筛选、带 `END` 标签的书籍，并支持按书名、作者和标签搜索。
 
@@ -28,7 +28,7 @@ python3 scripts/export_calibre.py --library "/你的/Calibre Library"
 nut-update
 ```
 
-它使用固定书库 `/Users/lingyundong/Calibre@M1/calibre@m1`，更新本地数据后会自动提交并推送到 GitHub，随后由 GitHub Pages 发布到 `https://nut.fushengji.top`。
+它会从本机预先配置的 Calibre 书库导出数据，自动提交并推送到 GitHub，随后由 GitHub Pages 发布。
 
 ## 免费公开部署：GitHub Pages
 
