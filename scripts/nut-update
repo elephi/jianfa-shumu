@@ -1,0 +1,14 @@
+#!/bin/sh
+set -eu
+
+SITE_DIR="/Users/lingyundong/Develop/favbooks/site"
+SCRIPT_DIR="$SITE_DIR/scripts"
+CALIBRE_LIBRARY="/Users/lingyundong/Calibre@M1/calibre@m1"
+
+python3 "$SCRIPT_DIR/export_calibre.py" \
+  --library "$CALIBRE_LIBRARY" \
+  --output "$SITE_DIR/dist" \
+  --tag END
+
+echo "本地‘减法书目’数据已更新：$SITE_DIR/dist"
+echo "在线网站尚未发布；需要上线时，请在 Codex 中说‘发布减法书目更新’。"

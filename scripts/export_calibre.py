@@ -47,6 +47,13 @@ def export(library: Path, output: Path, tag: str) -> int:
         JOIN tags selected_tag ON selected_tag.id = btl.tag
         LEFT JOIN comments c ON c.book = b.id
         WHERE lower(selected_tag.name) = lower(?)
+          AND NOT EXISTS (
+              SELECT 1
+              FROM books_tags_link hidden_link
+              JOIN tags hidden_tag ON hidden_tag.id = hidden_link.tag
+              WHERE hidden_link.book = b.id
+                AND lower(hidden_tag.name) = lower('HIDDEN')
+          )
         ORDER BY b.sort COLLATE NOCASE
         """,
         (tag,),
@@ -117,7 +124,7 @@ def export(library: Path, output: Path, tag: str) -> int:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="把带指定标签的 Calibre 书籍导出为静态网站数据")
+    parser = argparse.ArgumentParser(description="把带指定标签、且没有 HIDDEN 标签的 Calibre 书籍导出为静态网站数据")
     parser.add_argument("--library", type=Path, required=True, help="Calibre 书库目录（包含 metadata.db）")
     parser.add_argument("--tag", default="END", help="需要导出的标签，默认 END")
     parser.add_argument("--output", type=Path, default=Path(__file__).resolve().parents[1] / "dist", help="网站输出目录")
@@ -127,7 +134,7 @@ def main() -> int:
     except (OSError, sqlite3.Error) as error:
         print(f"导出失败：{error}", file=sys.stderr)
         return 1
-    print(f"已导出 {count} 本带有 {args.tag!r} 标签的书。")
+    print(f"已导出 {count} 本带有 {args.tag!r}、且不带 'HIDDEN' 标签的书。")
     return 0
 
 
