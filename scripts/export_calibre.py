@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import argparse
-import datetime as dt
 import html
 import json
 import re
@@ -35,13 +34,21 @@ def export(library: Path, output: Path, tag: str) -> int:
     output.mkdir(parents=True, exist_ok=True)
     covers = output / "covers"
     covers.mkdir(exist_ok=True)
+    cache_dir = output.parent / ".cache"
+    cache_dir.mkdir(exist_ok=True)
+    cover_state_path = cache_dir / "cover-state.json"
+    try:
+        cover_state = json.loads(cover_state_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        cover_state = {}
+    next_cover_state = {}
 
     uri = f"file:{database.resolve()}?mode=ro"
     connection = sqlite3.connect(uri, uri=True)
     connection.row_factory = sqlite3.Row
     rows = connection.execute(
         """
-        SELECT b.id, b.title, b.path, c.text AS description
+        SELECT b.id, b.title, b.path, b.last_modified, c.text AS description
         FROM books b
         JOIN books_tags_link btl ON btl.book = b.id
         JOIN tags selected_tag ON selected_tag.id = btl.tag
@@ -81,9 +88,16 @@ def export(library: Path, output: Path, tag: str) -> int:
         cover_url = None
         if source_cover.is_file():
             filename = f"{book_id}.jpg"
-            shutil.copy2(source_cover, covers / filename)
+            target_cover = covers / filename
+            source_stat = source_cover.stat()
+            signature = f"{source_stat.st_size}:{source_stat.st_mtime_ns}"
+            # Existing covers predate the cache and were just generated from the
+            # same library. Register them without re-encoding every book once.
+            if not target_cover.is_file() or (filename in cover_state and cover_state[filename] != signature):
+                shutil.copy2(source_cover, target_cover)
+                exported_cover_paths.append(target_cover)
             active_covers.add(filename)
-            exported_cover_paths.append(covers / filename)
+            next_cover_state[filename] = signature
             cover_url = f"covers/{filename}"
         books.append({
             "id": book_id,
@@ -110,11 +124,12 @@ def export(library: Path, output: Path, tag: str) -> int:
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
             )
+    cover_state_path.write_text(json.dumps(next_cover_state, indent=2) + "\n", encoding="utf-8")
 
     payload = {
         "meta": {
             "tag": tag,
-            "updated_at": dt.datetime.now().astimezone().strftime("%Y-%m-%d %H:%M"),
+            "updated_at": max((row["last_modified"] for row in rows), default="未知"),
             "count": len(books),
         },
         "books": books,
