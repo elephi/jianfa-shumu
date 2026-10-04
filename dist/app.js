@@ -228,7 +228,8 @@ function tagChip(tag) { const span = document.createElement("span"); span.textCo
 function openBook(book) {
   const tags = (book.tags || []).filter(t => normalize(t) !== "end").map(tag => `<span>${escapeHtml(tag)}</span>`).join("");
   const cover = book.cover ? `<img src="${escapeHtml(book.cover)}" alt="${escapeHtml(book.title)} 封面">` : `<div class="cover-placeholder" style="position:relative;aspect-ratio:2/3;--placeholder:${palette[(book.id || 0) % palette.length]}"><span>${escapeHtml(book.title)}</span><small>${escapeHtml((book.authors || []).join(" · "))}</small></div>`;
-  document.querySelector("#dialog-content").innerHTML = `<article class="dialog-book">${cover}<div class="dialog-meta"><p class="eyebrow">BOOK NOTES</p><h2>${escapeHtml(book.title)}</h2><p class="dialog-author">${escapeHtml((book.authors || []).join(" · ") || "未知作者")}</p><div class="book-tags">${tags}</div><p class="dialog-description">${escapeHtml(book.description || "")}</p></div></article>`;
+  const calibreId = book.id == null ? "—" : escapeHtml(book.id);
+  document.querySelector("#dialog-content").innerHTML = `<article class="dialog-book">${cover}<div class="dialog-meta"><p class="eyebrow">BOOK NOTES</p><h2>${escapeHtml(book.title)}</h2><p class="dialog-author">${escapeHtml((book.authors || []).join(" · ") || "未知作者")}</p><div class="book-tags">${tags}</div><p class="dialog-description">${escapeHtml(book.description || "")}</p><p class="dialog-book-id">Calibre ID · ${calibreId}</p></div></article>`;
   dialog.showModal();
 }
 

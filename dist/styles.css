@@ -108,6 +108,7 @@ dialog::backdrop { background: rgba(7,17,13,.62); backdrop-filter: blur(5px); }
 .dialog-author { color: var(--muted); margin: 10px 0 22px; }
 .dialog-description { color: #3f4b46; line-height: 1.8; white-space: pre-line; }
 .dialog-description:empty::after { content: "这本书暂时没有简介。"; color: var(--muted); }
+.dialog-book-id { margin: 26px 0 0; color: var(--muted); font-size: .68rem; letter-spacing: .06em; opacity: .62; }
 
 @media (max-width: 1050px) { .book-grid { grid-template-columns: repeat(4,1fr); } }
 @media (max-width: 760px) {
