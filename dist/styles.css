@@ -117,13 +117,16 @@ dialog::backdrop { background: rgba(7,17,13,.62); backdrop-filter: blur(5px); }
   .site-header { height: 66px; }
   .header-note { display: none; }
   .intro { min-height: 260px; grid-template-columns: 1fr; gap: 28px; padding: 46px 0 38px; }
+  .toolbar { display: grid; grid-template-columns: minmax(0, 1fr) 82px; gap: 10px; }
+  .search-box { grid-column: 1 / -1; width: 100%; }
+  .randomize { width: 100%; min-width: 0; min-height: 52px; }
+  .count { width: 100%; min-height: 52px; }
   .book-grid { grid-template-columns: repeat(2, minmax(0,1fr)); gap: 34px 18px; }
   .dialog-book { grid-template-columns: 125px 1fr; gap: 20px; padding: 28px 22px; }
 }
 @media (max-width: 440px) {
   kbd { display: none; }
-  .count { width: 76px; }
-  .randomize { min-width: 76px; padding: 0 10px; }
+  .randomize { padding: 0 10px; }
   .book-title { font-size: .98rem; }
   .dialog-book { grid-template-columns: 1fr; }
   .dialog-book img { width: 130px; }
