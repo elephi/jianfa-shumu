@@ -21,8 +21,8 @@
   <meta name="twitter:description" content="一份经过取舍的精选书单。按书名、作者和标签搜索，浏览书籍封面、简介与分类。">
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
   <link rel="mask-icon" href="assets/favicon.svg" color="#11251d">
-  <link rel="stylesheet" href="styles.css?v=6">
-  <script src="app.js?v=5" defer></script>
+  <link rel="stylesheet" href="styles.css?v=7">
+  <script src="app.js?v=6" defer></script>
   <script type="application/ld+json">
     {
       "@context": "https://schema.org",
@@ -55,7 +55,14 @@
         <p class="eyebrow">THE SHORTLIST</p>
         <h1 id="page-title">书很多，<br><em>留下少数。</em></h1>
       </div>
-      <p class="intro-copy">这不是完整藏书，而是经过取舍之后留下的书。按书名、作者或标签，看看哪些作品通过了我的减法筛选。</p>
+      <div class="intro-aside">
+        <p class="intro-copy">这不是完整藏书，而是经过取舍之后留下的书。按书名、作者或标签，看看哪些作品通过了我的减法筛选。</p>
+        <p class="library-stats" aria-live="polite">
+          <span>上次新增 <strong id="last-added-count">—</strong> 本</span>
+          <span class="stats-divider" aria-hidden="true"></span>
+          <span>当前共 <strong id="total-book-count">—</strong> 本</span>
+        </p>
+      </div>
     </section>
 
     <section class="library" aria-label="书籍列表">

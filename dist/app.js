@@ -25,6 +25,8 @@ async function loadBooks() {
     state.homeBooks = createHomeSample();
     state.meta = payload.meta || {};
     document.querySelector("#updated-at").textContent = state.meta.updated_at || "未知";
+    document.querySelector("#last-added-count").textContent = Math.max(0, Number(state.meta.last_added_count) || 0);
+    document.querySelector("#total-book-count").textContent = Number(state.meta.count) || state.books.length;
     renderFilters();
     render();
   } catch (error) {

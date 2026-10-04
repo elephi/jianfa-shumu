@@ -32,6 +32,11 @@ def export(library: Path, output: Path, tag: str) -> int:
         raise FileNotFoundError(f"找不到 Calibre 数据库：{database}")
 
     output.mkdir(parents=True, exist_ok=True)
+    data_path = output / "books.json"
+    try:
+        previous_payload = json.loads(data_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        previous_payload = {}
     covers = output / "covers"
     covers.mkdir(exist_ok=True)
     cache_dir = output.parent / ".cache"
@@ -126,15 +131,24 @@ def export(library: Path, output: Path, tag: str) -> int:
             )
     cover_state_path.write_text(json.dumps(next_cover_state, indent=2) + "\n", encoding="utf-8")
 
+    previous_books = previous_payload.get("books", [])
+    previous_ids = {book.get("id") for book in previous_books}
+    current_ids = {book.get("id") for book in books}
+    if previous_books != books:
+        last_added_count = len(current_ids - previous_ids) if previous_books else len(books)
+    else:
+        last_added_count = previous_payload.get("meta", {}).get("last_added_count", 0)
+
     payload = {
         "meta": {
             "tag": tag,
             "updated_at": max((row["last_modified"] for row in rows), default="未知"),
             "count": len(books),
+            "last_added_count": last_added_count,
         },
         "books": books,
     }
-    (output / "books.json").write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    data_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return len(books)
 
 
