@@ -81,6 +81,11 @@ def export(library: Path, output: Path, tag: str) -> int:
         JOIN books_tags_link btl ON btl.tag = t.id
         WHERE btl.book = ? ORDER BY t.name COLLATE NOCASE
     """
+    isbn_query = """
+        SELECT val FROM identifiers
+        WHERE book = ? AND lower(type) = 'isbn'
+        LIMIT 1
+    """
 
     books = []
     active_covers = set()
@@ -89,6 +94,8 @@ def export(library: Path, output: Path, tag: str) -> int:
         book_id = row["id"]
         authors = [item[0] for item in connection.execute(author_query, (book_id,))]
         tags = [item[0] for item in connection.execute(tag_query, (book_id,))]
+        isbn_row = connection.execute(isbn_query, (book_id,)).fetchone()
+        isbn = isbn_row[0] if isbn_row else None
         source_cover = library / row["path"] / "cover.jpg"
         cover_url = None
         if source_cover.is_file():
@@ -106,6 +113,7 @@ def export(library: Path, output: Path, tag: str) -> int:
             cover_url = f"covers/{filename}"
         books.append({
             "id": book_id,
+            "isbn": isbn,
             "title": row["title"],
             "authors": authors,
             "tags": tags,

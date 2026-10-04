@@ -105,7 +105,9 @@ dialog::backdrop { background: rgba(7,17,13,.62); backdrop-filter: blur(5px); }
 .dialog-meta { padding: 15px 0 5px; }
 .dialog-meta .eyebrow { margin-bottom: 10px; }
 .dialog-meta h2 { margin: 0; font-family: ui-serif, Georgia, "Songti SC", serif; font-size: clamp(1.8rem, 4vw, 2.75rem); line-height: 1.15; }
-.dialog-author { color: var(--muted); margin: 10px 0 22px; }
+.dialog-byline { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; margin: 10px 0 22px; }
+.dialog-author { color: var(--muted); margin: 0; }
+.dialog-isbn { padding: 4px 8px; border: 1px solid rgba(169,104,32,.26); border-radius: 999px; color: #73551c; background: rgba(233,170,47,.1); font-size: .7rem; font-weight: 650; letter-spacing: .025em; white-space: nowrap; }
 .dialog-description { color: #3f4b46; line-height: 1.8; white-space: pre-line; }
 .dialog-description:empty::after { content: "这本书暂时没有简介。"; color: var(--muted); }
 .dialog-book-id { margin: 26px 0 0; color: var(--muted); font-size: .68rem; letter-spacing: .06em; opacity: .62; }
