@@ -74,8 +74,7 @@
           <kbd>⌘ K</kbd>
         </label>
         <button id="randomize" class="toolbar-action randomize is-active" type="button" title="随机显示100本书" aria-pressed="true">随便看看</button>
-        <button id="newest-books" class="toolbar-action newest-books" type="button" title="按入库时间显示最新书目" aria-pressed="false">新增书目</button>
-        <div class="count" aria-live="polite"><strong id="book-count">—</strong><span>本书</span></div>
+        <button id="newest-books" class="toolbar-action newest-books" type="button" title="按首次发布到网站的时间显示最新书目" aria-pressed="false">新增书目</button>
       </div>
 
       <div id="tag-filters" class="tag-filters" aria-label="按标签筛选"></div>
@@ -110,12 +109,12 @@
           <img class="cover" alt="" loading="lazy">
           <div class="cover-placeholder" aria-hidden="true"><span></span><small></small></div>
         </div>
-        <div class="book-info">
-          <h2 class="book-title"></h2>
-          <p class="book-author"></p>
-          <div class="book-tags"></div>
-        </div>
       </button>
+      <div class="book-info">
+        <button class="book-title-open" type="button"><span class="book-title"></span></button>
+        <p class="book-author"></p>
+        <div class="book-tags"></div>
+      </div>
     </article>
   </template>
 

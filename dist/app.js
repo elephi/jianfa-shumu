@@ -1,10 +1,9 @@
 const PAGE_SIZE = 30;
 const HOME_LIMIT = 100;
 const HOME_SAMPLE_KEY = "jianfa-home-sample";
-const state = { books: [], homeBooks: [], filteredBooks: [], rendered: 0, page: 1, query: "", tag: "全部", homeMode: "random", meta: {} };
+const state = { books: [], homeBooks: [], filteredBooks: [], rendered: 0, page: 1, query: "", author: "", tag: "全部", homeMode: "random", meta: {} };
 const grid = document.querySelector("#book-grid");
 const search = document.querySelector("#search");
-const count = document.querySelector("#book-count");
 const filters = document.querySelector("#tag-filters");
 const empty = document.querySelector("#empty-state");
 const dialog = document.querySelector("#book-dialog");
@@ -71,13 +70,14 @@ function visibleBooks() {
   return source.filter(book => {
     const haystack = normalize([book.title, ...(book.authors || []), ...(book.tags || [])].join(" "));
     const matchesQuery = !query || query.split(/\s+/).every(term => haystack.includes(term));
+    const matchesAuthor = !state.author || (book.authors || []).some(author => author === state.author);
     const matchesTag = state.tag === "全部" || (book.tags || []).includes(state.tag);
-    return matchesQuery && matchesTag;
+    return matchesQuery && matchesAuthor && matchesTag;
   });
 }
 
 function isSearchMode() {
-  return normalize(state.query).trim() !== "" || state.tag !== "全部";
+  return normalize(state.query).trim() !== "" || state.author !== "" || state.tag !== "全部";
 }
 
 function shuffled(books) {
@@ -130,7 +130,6 @@ function render() {
   state.filteredBooks = visibleBooks();
   state.rendered = 0;
   grid.replaceChildren();
-  count.textContent = state.filteredBooks.length;
   empty.hidden = state.filteredBooks.length > 0;
   grid.hidden = state.filteredBooks.length === 0;
   sentinel.hidden = true;
@@ -215,6 +214,7 @@ function randomizeBooks() {
   state.homeMode = "random";
   state.homeBooks = createHomeSample();
   state.query = "";
+  state.author = "";
   state.tag = "全部";
   state.page = 1;
   search.value = "";
@@ -228,6 +228,7 @@ function showNewestBooks() {
   state.homeMode = "newest";
   state.homeBooks = createNewestBooks();
   state.query = "";
+  state.author = "";
   state.tag = "全部";
   state.page = 1;
   search.value = "";
@@ -248,25 +249,57 @@ function bookCard(book, index) {
   placeholder.querySelector("span").textContent = title;
   placeholder.querySelector("small").textContent = (book.authors || []).join(" · ") || "未知作者";
   card.querySelector(".book-title").textContent = title;
-  card.querySelector(".book-author").textContent = (book.authors || []).join(" · ") || "未知作者";
+  renderAuthorButtons(card.querySelector(".book-author"), book.authors);
   card.querySelector(".book-tags").append(...(book.tags || []).filter(t => normalize(t) !== "end").slice(0, 3).map(tagChip));
   card.querySelector(".book-open").addEventListener("click", () => openBook(book));
+  card.querySelector(".book-title-open").addEventListener("click", () => openBook(book));
   return card;
 }
 
 function tagChip(tag) { const span = document.createElement("span"); span.textContent = tag; return span; }
+
+function renderAuthorButtons(container, authors) {
+  const names = (authors || []).filter(Boolean);
+  if (!names.length) {
+    container.textContent = "未知作者";
+    return;
+  }
+  names.forEach((author, index) => {
+    if (index) container.append(document.createTextNode(" · "));
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "author-link";
+    button.textContent = author;
+    button.title = `查看 ${author} 的全部书籍`;
+    button.addEventListener("click", () => showAuthorBooks(author));
+    container.append(button);
+  });
+}
+
+function showAuthorBooks(author) {
+  if (dialog.open) dialog.close();
+  state.author = author;
+  state.query = "";
+  state.tag = "全部";
+  state.page = 1;
+  search.value = author;
+  renderFilters();
+  render();
+  document.querySelector(".library").scrollIntoView({ behavior: "smooth", block: "start" });
+}
 
 function openBook(book) {
   const tags = (book.tags || []).filter(t => normalize(t) !== "end").map(tag => `<span>${escapeHtml(tag)}</span>`).join("");
   const cover = book.cover ? `<img src="${escapeHtml(book.cover)}" alt="${escapeHtml(book.title)} 封面">` : `<div class="cover-placeholder" style="position:relative;aspect-ratio:2/3;--placeholder:${palette[(book.id || 0) % palette.length]}"><span>${escapeHtml(book.title)}</span><small>${escapeHtml((book.authors || []).join(" · "))}</small></div>`;
   const calibreId = book.id == null ? "—" : escapeHtml(book.id);
   const isbn = book.isbn ? `<span class="dialog-isbn">ISBN ${escapeHtml(book.isbn)}</span>` : "";
-  document.querySelector("#dialog-content").innerHTML = `<article class="dialog-book">${cover}<div class="dialog-meta"><p class="eyebrow">BOOK NOTES</p><h2>${escapeHtml(book.title)}</h2><div class="dialog-byline"><p class="dialog-author">${escapeHtml((book.authors || []).join(" · ") || "未知作者")}</p>${isbn}</div><div class="book-tags">${tags}</div><p class="dialog-description">${escapeHtml(book.description || "")}</p><p class="dialog-book-id">Calibre ID · ${calibreId}</p></div></article>`;
+  document.querySelector("#dialog-content").innerHTML = `<article class="dialog-book">${cover}<div class="dialog-meta"><p class="eyebrow">BOOK NOTES</p><h2>${escapeHtml(book.title)}</h2><div class="dialog-byline"><p class="dialog-author"></p>${isbn}</div><div class="book-tags">${tags}</div><p class="dialog-description">${escapeHtml(book.description || "")}</p><p class="dialog-book-id">Calibre ID · ${calibreId}</p></div></article>`;
+  renderAuthorButtons(document.querySelector("#dialog-content .dialog-author"), book.authors);
   dialog.showModal();
 }
 
-search.addEventListener("input", event => { state.query = event.target.value; state.page = 1; render(); });
-document.querySelector("#clear-search").addEventListener("click", () => { search.value = ""; state.query = ""; state.tag = "全部"; state.page = 1; renderFilters(); render(); search.focus(); });
+search.addEventListener("input", event => { state.query = event.target.value; state.author = ""; state.page = 1; render(); });
+document.querySelector("#clear-search").addEventListener("click", () => { search.value = ""; state.query = ""; state.author = ""; state.tag = "全部"; state.page = 1; renderFilters(); render(); search.focus(); });
 document.querySelector("#randomize").addEventListener("click", randomizeBooks);
 document.querySelector("#newest-books").addEventListener("click", showNewestBooks);
 document.querySelector(".dialog-close").addEventListener("click", () => dialog.close());
