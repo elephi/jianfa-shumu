@@ -1,7 +1,7 @@
 const PAGE_SIZE = 30;
 const HOME_LIMIT = 100;
 const HOME_SAMPLE_KEY = "jianfa-home-sample";
-const state = { books: [], homeBooks: [], filteredBooks: [], rendered: 0, page: 1, query: "", tag: "全部", meta: {} };
+const state = { books: [], homeBooks: [], filteredBooks: [], rendered: 0, page: 1, query: "", tag: "全部", homeMode: "random", meta: {} };
 const grid = document.querySelector("#book-grid");
 const search = document.querySelector("#search");
 const count = document.querySelector("#book-count");
@@ -110,6 +110,22 @@ function createHomeSample() {
   return sample;
 }
 
+function createNewestBooks() {
+  return [...state.books]
+    .sort((a, b) => String(b.added_at || "").localeCompare(String(a.added_at || "")) || Number(b.id || 0) - Number(a.id || 0))
+    .slice(0, HOME_LIMIT);
+}
+
+function updateHomeActions() {
+  const randomButton = document.querySelector("#randomize");
+  const newestButton = document.querySelector("#newest-books");
+  const randomActive = state.homeMode === "random";
+  randomButton.classList.toggle("is-active", randomActive);
+  randomButton.setAttribute("aria-pressed", String(randomActive));
+  newestButton.classList.toggle("is-active", !randomActive);
+  newestButton.setAttribute("aria-pressed", String(!randomActive));
+}
+
 function render() {
   state.filteredBooks = visibleBooks();
   state.rendered = 0;
@@ -196,11 +212,26 @@ function pageButton(label, page, disabled, rel) {
 }
 
 function randomizeBooks() {
+  state.homeMode = "random";
   state.homeBooks = createHomeSample();
   state.query = "";
   state.tag = "全部";
   state.page = 1;
   search.value = "";
+  updateHomeActions();
+  renderFilters();
+  render();
+  document.querySelector("#book-grid").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function showNewestBooks() {
+  state.homeMode = "newest";
+  state.homeBooks = createNewestBooks();
+  state.query = "";
+  state.tag = "全部";
+  state.page = 1;
+  search.value = "";
+  updateHomeActions();
   renderFilters();
   render();
   document.querySelector("#book-grid").scrollIntoView({ behavior: "smooth", block: "start" });
@@ -237,6 +268,7 @@ function openBook(book) {
 search.addEventListener("input", event => { state.query = event.target.value; state.page = 1; render(); });
 document.querySelector("#clear-search").addEventListener("click", () => { search.value = ""; state.query = ""; state.tag = "全部"; state.page = 1; renderFilters(); render(); search.focus(); });
 document.querySelector("#randomize").addEventListener("click", randomizeBooks);
+document.querySelector("#newest-books").addEventListener("click", showNewestBooks);
 document.querySelector(".dialog-close").addEventListener("click", () => dialog.close());
 dialog.addEventListener("click", event => { if (event.target === dialog) dialog.close(); });
 document.addEventListener("keydown", event => { if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") { event.preventDefault(); search.focus(); } });

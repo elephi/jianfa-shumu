@@ -20,7 +20,7 @@ cd site
 python3 scripts/export_calibre.py --library "/你的/Calibre Library"
 ```
 
-脚本会只读打开 `metadata.db`，导出带 `END` 标签的书名、作者、ISBN、标签、封面和简介到 `dist/`。同时带有 `HIDDEN` 或 `POL` 标签的书会被排除，即使它也带有 `END`。不会上传电子书文件。
+脚本会只读打开 `metadata.db`，导出带 `END` 标签的书名、作者、ISBN、入库时间、标签、封面和简介到 `dist/`。同时带有 `HIDDEN` 或 `POL` 标签的书会被排除，即使它也带有 `END`。不会上传电子书文件。
 
 本机已经配置快捷命令时，也可以直接运行：
 

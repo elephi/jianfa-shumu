@@ -21,8 +21,8 @@
   <meta name="twitter:description" content="一份经过取舍的精选书单。按书名、作者和标签搜索，浏览书籍封面、简介与分类。">
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
   <link rel="mask-icon" href="assets/favicon.svg" color="#11251d">
-  <link rel="stylesheet" href="styles.css?v=9">
-  <script src="app.js?v=8" defer></script>
+  <link rel="stylesheet" href="styles.css?v=10">
+  <script src="app.js?v=9" defer></script>
   <script type="application/ld+json">
     {
       "@context": "https://schema.org",
@@ -73,7 +73,8 @@
           <input id="search" type="search" placeholder="搜索书名、作者或标签" autocomplete="off">
           <kbd>⌘ K</kbd>
         </label>
-        <button id="randomize" class="randomize" type="button" title="随机打乱当前书目">随机看看</button>
+        <button id="randomize" class="toolbar-action randomize is-active" type="button" title="随机显示100本书" aria-pressed="true">随便看看</button>
+        <button id="newest-books" class="toolbar-action newest-books" type="button" title="按入库时间显示最新书目" aria-pressed="false">新增书目</button>
         <div class="count" aria-live="polite"><strong id="book-count">—</strong><span>本书</span></div>
       </div>
 

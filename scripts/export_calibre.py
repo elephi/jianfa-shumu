@@ -53,7 +53,7 @@ def export(library: Path, output: Path, tag: str) -> int:
     connection.row_factory = sqlite3.Row
     rows = connection.execute(
         """
-        SELECT b.id, b.title, b.path, b.last_modified, c.text AS description
+        SELECT b.id, b.title, b.path, b.timestamp, b.last_modified, c.text AS description
         FROM books b
         JOIN books_tags_link btl ON btl.book = b.id
         JOIN tags selected_tag ON selected_tag.id = btl.tag
@@ -114,6 +114,7 @@ def export(library: Path, output: Path, tag: str) -> int:
         books.append({
             "id": book_id,
             "isbn": isbn,
+            "added_at": row["timestamp"],
             "title": row["title"],
             "authors": authors,
             "tags": tags,
