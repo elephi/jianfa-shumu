@@ -11,6 +11,7 @@ import shutil
 import sqlite3
 import subprocess
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 
 
@@ -37,6 +38,12 @@ def export(library: Path, output: Path, tag: str) -> int:
         previous_payload = json.loads(data_path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
         previous_payload = {}
+    previous_books_by_id = {
+        book.get("id"): book
+        for book in previous_payload.get("books", [])
+        if book.get("id") is not None
+    }
+    exported_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
     covers = output / "covers"
     covers.mkdir(exist_ok=True)
     cache_dir = output.parent / ".cache"
@@ -53,7 +60,7 @@ def export(library: Path, output: Path, tag: str) -> int:
     connection.row_factory = sqlite3.Row
     rows = connection.execute(
         """
-        SELECT b.id, b.title, b.path, b.timestamp, b.last_modified, c.text AS description
+        SELECT b.id, b.title, b.path, b.last_modified, c.text AS description
         FROM books b
         JOIN books_tags_link btl ON btl.book = b.id
         JOIN tags selected_tag ON selected_tag.id = btl.tag
@@ -114,7 +121,9 @@ def export(library: Path, output: Path, tag: str) -> int:
         books.append({
             "id": book_id,
             "isbn": isbn,
-            "added_at": row["timestamp"],
+            # This means first published on the website, not imported into Calibre.
+            # Preserve it across exports; only a newly published ID gets "now".
+            "published_at": previous_books_by_id.get(book_id, {}).get("published_at") or exported_at,
             "title": row["title"],
             "authors": authors,
             "tags": tags,

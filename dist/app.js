@@ -112,7 +112,7 @@ function createHomeSample() {
 
 function createNewestBooks() {
   return [...state.books]
-    .sort((a, b) => String(b.added_at || "").localeCompare(String(a.added_at || "")) || Number(b.id || 0) - Number(a.id || 0))
+    .sort((a, b) => String(b.published_at || "").localeCompare(String(a.published_at || "")) || Number(b.id || 0) - Number(a.id || 0))
     .slice(0, HOME_LIMIT);
 }
 
